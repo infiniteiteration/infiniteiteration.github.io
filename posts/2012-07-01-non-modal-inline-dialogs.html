@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>Infinite Iteration: Non-Modal Inline Dialogs: Ask Questions in Awesome Ways</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href='http://fonts.googleapis.com/css?family=Alegreya:400italic,700italic,400,700' rel='stylesheet'
+          type='text/css'>
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.1/styles/default.min.css">
+    <link href="../css/screen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+<nav class="navbar navbar-default">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/blog/index.html">Infinite Iteration</a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+            <ul class="nav navbar-nav navbar-right">
+                <li ><a href="/blog/index.html">Home</a></li>
+                <li
+                ><a href="/blog/archives.html">Archives</a></li>
+                
+                <li><a href="/blog/feed.xml">RSS</a></li>
+            </ul>
+        </div><!--/.nav-collapse -->
+    </div><!--/.container-fluid -->
+</nav>
+
+
+<div class="container">
+
+
+    <div class="row">
+        <div class="col-lg-9">
+            <div id="content">
+                
+<div id="post">
+    <div id="post-header">
+    <div id="post-meta" class="row">
+        <div class="col-lg-6">July 1, 2012</div>
+        
+    </div>
+    <h2>Non-Modal Inline Dialogs: Ask Questions in Awesome Ways</h2>
+</div>
+<div>
+    </ol class="contents">
+    <p>Asking questions, confirmations from the users is a pretty usual part of any user interface. Still often I find tackling this simple task solved in unsatisfying way. The simplest solution is the <code>confirm&#40;'ask your question..'&#41;;</code> dialog. However, this often ruins the otherwise possibly clean design. Confirm dialogs are modal and therefore users can not proceed further actions without answering the questions. But what if you do not need immediate answers? Often it is enough leaving the dialog questions opened. In such situation try using "inline dialogs".</p><p>Let's build a simple scenario. We have three simple events which the user can trigger: calling a firemen, calling police or ambulance. Obviously triggering these events could be useful to handle with a simple question before they are really triggered. If this security question is answered positively, the event is triggered, otherwise the original <i>Call the ...</i> link is rendered. The dialog blocks are divided into a trigger and question part.</p><pre><code>&lt;DIV CLASS='dialog&#95;block' DATA-MESSAGE='Calling the firemen!'&gt;
+  &lt;A HREF=&quot;#&quot; CLASS=&quot;dialog&#95;trigger&quot;&gt;Call the Firemen!&lt;/A&gt;
+  &lt;DIV CLASS=&quot;dialog&#95;question&quot;&gt;
+    Call?
+    &lt;A HREF=&quot;#&quot; CLASS=&quot;answer&#95;yes&quot;&gt;Yes&lt;/A&gt;
+    &lt;A HREF=&quot;#&quot; CLASS=&quot;answer&#95;no&quot;&gt;No&lt;/A&gt;
+  &lt;/DIV&gt;
+&lt;/DIV&gt;
+</code></pre><p>For handling the dialog actions I use jQuery now. We need only three simple callbacks for handlers: activation of the question trigger, handler for the yes and the no answer.</p><pre><code>var turnOffDialogQuestion = function&#40;el&#41; {
+  $dialog&#95;block = getDialogBlock&#40;el&#41;;
+  $dialog&#95;block.find&#40;'.dialog&#95;question'&#41;.fadeOut&#40;'fast',
+    function&#40;&#41; { $dialog&#95;block.find&#40;'.dialog&#95;trigger'&#41;.fadeIn&#40;'fast'&#41;; }&#41;;
+};
+var getDialogBlock = function&#40;el&#41; {
+  return $&#40;el&#41;.parents&#40;'.dialog&#95;block'&#41;;
+};
+$&#40;document&#41;.ready&#40;function&#40;&#41; {
+  $&#40;'.dialog&#95;trigger'&#41;.click&#40;function&#40;ev&#41; {
+    $dialog&#95;block = getDialogBlock&#40;this&#41;;
+    $&#40;this&#41;.fadeOut&#40;'fast',
+      function&#40;&#41; { $dialog&#95;block.find&#40;'.dialog&#95;question'&#41;.fadeIn&#40;'fast'&#41;; }&#41;;
+    ev.preventDefault&#40;&#41;;
+    return false;
+  }&#41;;
+  $&#40;'.dialog&#95;question .answer&#95;yes'&#41;.click&#40;function&#40;ev&#41; {
+    alert&#40;getDialogBlock&#40;this&#41;.data&#40;'message'&#41;&#41;;
+    turnOffDialogQuestion&#40;this&#41;;
+    ev.preventDefault&#40;&#41;;
+    return false;
+  }&#41;;
+  $&#40;'.dialog&#95;question .answer&#95;no'&#41;.click&#40;function&#40;ev&#41; {
+    turnOffDialogQuestion&#40;this&#41;;
+    ev.preventDefault&#40;&#41;;
+    return false;
+  }&#41;;
+}&#41;;
+</code></pre>
+</div>
+
+<div id="post-tags">
+    <b>Tags: </b>
+    
+    <a href="/blog/tags/javascript.html">javascript</a>
+    
+</div>
+
+
+    <div id="prev-next">
+        
+        <a href="/blog/posts/2012-07-16-restricting-models-with-he.htmlallr.html">&laquo; Restricting Models with Heimdallr</a>
+        
+        
+    </div>
+
+    
+
+
+</div>
+
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div id="sidebar">
+                <!--<h3>Links</h3>-->
+                <!--<ul id="links">-->
+                    <!---->
+                <!--</ul>-->
+                
+                <div id="recent">
+                    <h3>Recent Posts</h3>
+                    <ul>
+                        
+                        <li><a href="/blog/posts/2013-07-07-he.htmlallr-with-active-model-serializers.html">Heimdallr with active model serializers</a></li>
+                        
+                        <li><a href="/blog/posts/2013-02-10-backbone-object-creation.html">Backbone forms: How to get ids for objects created on the client side?</a></li>
+                        
+                        <li><a href="/blog/posts/2012-07-16-restricting-models-with-he.htmlallr.html">Restricting Models with Heimdallr</a></li>
+                        
+                    </ul>
+                </div>
+                
+                
+                <div id="tags">
+                    <h3>Tags</h3>
+                    <ul>
+                        
+                        <li><a href="/blog/tags/javascript.html">javascript</a></li>
+                        
+                        <li><a href="/blog/tags/backbone.html">backbone</a></li>
+                        
+                        <li><a href="/blog/tags/rails.html">rails</a></li>
+                        
+                        <li><a href="/blog/tags/ruby.html">ruby</a></li>
+                        
+                    </ul>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+    <footer>Copyright &copy; 2014 BLOGAWESOME
+        <p style="text-align: center;">Powered by <a href="http://cryogenweb.org">Cryogen</a></p></footer>
+</div>
+<script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+<script src="../js/highlight.pack.js" type="text/javascript"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+</body>
+</html>
+

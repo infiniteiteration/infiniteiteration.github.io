@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>Infinite Iteration: Restricting Models with Heimdallr</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href='http://fonts.googleapis.com/css?family=Alegreya:400italic,700italic,400,700' rel='stylesheet'
+          type='text/css'>
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.1/styles/default.min.css">
+    <link href="../css/screen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+<nav class="navbar navbar-default">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/blog/index.html">Infinite Iteration</a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+            <ul class="nav navbar-nav navbar-right">
+                <li ><a href="/blog/index.html">Home</a></li>
+                <li
+                ><a href="/blog/archives.html">Archives</a></li>
+                
+                <li><a href="/blog/feed.xml">RSS</a></li>
+            </ul>
+        </div><!--/.nav-collapse -->
+    </div><!--/.container-fluid -->
+</nav>
+
+
+<div class="container">
+
+
+    <div class="row">
+        <div class="col-lg-9">
+            <div id="content">
+                
+<div id="post">
+    <div id="post-header">
+    <div id="post-meta" class="row">
+        <div class="col-lg-6">July 16, 2012</div>
+        
+    </div>
+    <h2>Restricting Models with Heimdallr</h2>
+</div>
+<div>
+    </ol class="contents">
+    <p>I found myself several times implementing the logic for restictions in controllers. Althought that might be fine, when the things get more complex, this practice can become hard to maintain. As modeling restrictions belongs to the core logic of the application, perhaphs they should be placed there..</p><p>That's what <a href='http://github.com/roundlake/heimdallr'>heimdallr</a> is supposed to resolve. This gem provides model level security by wrapping the model classes and instances by a proxy. The access rights are declared in the model:</p><pre><code>class Card &lt; ActiveRecord::Base
+  include Heimdallr::Model
+  belongs&#95;to :person
+  attr&#95;accessible :suit, :rank, :backside
+  restrict do |person, card|
+    if person.arbiter?
+      # the arbiter can do anything
+      scope :fetch, -&gt; {}
+    elsif person.playing?
+      # if the user is playing, only the card at hand is visible
+      scope :fetch, -&gt; do
+        where&#40;&#91;'person&#95;id = ?', person&#93;&#41;
+      end
+    end
+  end
+end
+</code></pre><p>The <code>restrict</code> block can take more parameters, based on these we can decide how to restrict the model. The last parameter (<code>card</code> in the example) is an instance of the model, if it is <code>nil</code> the model class was passed to the restrict block. The restriction can be thus called on either the model class or on a concrete instance: <code>Card.restrict&#40;person&#41;</code> vs <code>card.restrict&#40;person&#41;</code>.</p><p>Heimdallr maintains a scope for fetching and deletion. Scope restriction are obviously useful when restricting the model class. Calling <code>all</code> on the proxied model returns only the cards visible by the person. Wondering how to simply ask whether a card instance is visible by the person? <code>card.restrict&#40;person&#41;.visible?</code> does just that. For testing destroyability of a record there is <code>destroyable?</code>.</p><p>I covered briefly scope restriction using  heimdallr in this post. However, there is yet more how heimdallr can help. Finer restrictions, such as attribute visibility and updatability are often crucial as well. But let's leave this for later.</p>
+</div>
+
+<div id="post-tags">
+    <b>Tags: </b>
+    
+    <a href="/blog/tags/ruby.html">ruby</a>
+    
+    <a href="/blog/tags/rails.html">rails</a>
+    
+</div>
+
+
+    <div id="prev-next">
+        
+        <a href="/blog/posts/2013-02-10-backbone-object-creation.html">&laquo; Backbone forms: How to get ids for objects created on the client side?</a>
+        
+        
+        <a class="right" href="/blog/posts/2012-07-01-non-modal-inline-dialogs.html">Non-Modal Inline Dialogs: Ask Questions in Awesome Ways &raquo;</a>
+        
+    </div>
+
+    
+
+
+</div>
+
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div id="sidebar">
+                <!--<h3>Links</h3>-->
+                <!--<ul id="links">-->
+                    <!---->
+                <!--</ul>-->
+                
+                <div id="recent">
+                    <h3>Recent Posts</h3>
+                    <ul>
+                        
+                        <li><a href="/blog/posts/2013-07-07-he.htmlallr-with-active-model-serializers.html">Heimdallr with active model serializers</a></li>
+                        
+                        <li><a href="/blog/posts/2013-02-10-backbone-object-creation.html">Backbone forms: How to get ids for objects created on the client side?</a></li>
+                        
+                        <li><a href="/blog/posts/2012-07-16-restricting-models-with-he.htmlallr.html">Restricting Models with Heimdallr</a></li>
+                        
+                    </ul>
+                </div>
+                
+                
+                <div id="tags">
+                    <h3>Tags</h3>
+                    <ul>
+                        
+                        <li><a href="/blog/tags/javascript.html">javascript</a></li>
+                        
+                        <li><a href="/blog/tags/backbone.html">backbone</a></li>
+                        
+                        <li><a href="/blog/tags/rails.html">rails</a></li>
+                        
+                        <li><a href="/blog/tags/ruby.html">ruby</a></li>
+                        
+                    </ul>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+    <footer>Copyright &copy; 2014 BLOGAWESOME
+        <p style="text-align: center;">Powered by <a href="http://cryogenweb.org">Cryogen</a></p></footer>
+</div>
+<script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+<script src="../js/highlight.pack.js" type="text/javascript"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+</body>
+</html>
+

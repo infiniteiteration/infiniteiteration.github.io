@@ -1,0 +1,181 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<rss version='2.0' xmlns:atom='http://www.w3.org/2005/Atom'>
+<channel>
+<atom:link href='http://infiniteiteration.com/' rel='self' type='application/rss+xml'/>
+<generator>
+clj-rss
+</generator>
+<title>
+Infinite Iteration
+</title>
+<link>
+http://infiniteiteration.com/
+</link>
+<description>
+Blog about development infinity
+</description>
+<lastBuildDate>
+Fri, 06 Feb 2015 11:40:56 +0100
+</lastBuildDate>
+<author>
+fifigyuri
+</author>
+<item>
+<guid>
+http://infiniteiteration.com/blog/posts/2013-07-07-he.htmlallr-with-active-model-serializers.html
+</guid>
+<link>
+http://infiniteiteration.com/blog/posts/2013-07-07-he.htmlallr-with-active-model-serializers.html
+</link>
+<title>
+Heimdallr with active model serializers
+</title>
+<description>
+&lt;p&gt;I have introduced &lt;a href='https://github.com/inossidabile/heimdallr'&gt;heimdallr&lt;/a&gt; in an &lt;a href='/blog/blog/restricting-models-with-heimdallr'&gt;earlier post&lt;/a&gt;. It is an excellent tool for securing models. &lt;code&gt;heimdallr&lt;/code&gt; can create proxies for collections and records, it is possible to define scopes for fetching and deletion, and which messages are permitted to be forwarded to the proxied record. I use &lt;code&gt;active&amp;#95;model&amp;#95;serializers&lt;/code&gt; for serialization. It provides an elegant way to define serialization rules for the models.&lt;/p&gt;&lt;p&gt;&lt;code&gt;active&amp;#95;model&amp;#95;serializers&lt;/code&gt; does not work with the collections and records secured by a proxy out of the box. It would be good to know what should happen when a not permitted attribute is accessed on the model. I thought about two options:&lt;/p&gt;&lt;ol&gt;&lt;li&gt;the serializer could raise a permission error or&lt;/li&gt;&lt;li&gt;it serializes a value interpretted as not readable.&lt;/li&gt;&lt;/ol&gt;&lt;p&gt;I chose the second approach. However, as json does not know about symbols as ruby does, serializing unaccessible attributes as &lt;code&gt;nil&lt;/code&gt; seems to a proper option. The consumers of the produced json need to agree on the interpretation of a &lt;code&gt;null&lt;/code&gt; value in the received json as a not accessible attribute.&lt;/p&gt;&lt;p&gt;Luckily the described strategy for serializing secured record is very simple. Heimdallr defines method &lt;code&gt;implicit&lt;/code&gt; which returns a proxy with a strategy returning &lt;code&gt;nil&lt;/code&gt; for unaccessible attributes.&lt;/p&gt;&lt;p&gt;I conclude this post with the short code doing the trick described above:&lt;/p&gt;&lt;pre&gt;&lt;code&gt;require 'heimdallr'
+require 'active&amp;#95;model&amp;#95;serializers'
+module Heimdallr
+  class Proxy::Record
+    delegate :active&amp;#95;model&amp;#95;serializer, to: :@record
+    def read&amp;#95;attribute&amp;#95;for&amp;#95;serialization&amp;#40;name&amp;#41;
+      self.implicit.send name
+    end
+  end
+  class Proxy::Collection
+    include ActiveModel::ArraySerializerSupport
+  end
+end
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+<pubDate>
+Sun, 07 Jul 2013 00:00:00 +0200
+</pubDate>
+<author>
+fifigyuri
+</author>
+</item>
+<item>
+<guid>
+http://infiniteiteration.com/blog/posts/2013-02-10-backbone-object-creation.html
+</guid>
+<link>
+http://infiniteiteration.com/blog/posts/2013-02-10-backbone-object-creation.html
+</link>
+<title>
+Backbone forms: How to get ids for objects created on the client side?
+</title>
+<description>
+&lt;p&gt;I am building an application which is built with Backbone.js. It contains several forms, which make it possible to create sub-items in &lt;i&gt;collections&lt;/i&gt;. I run into the issue of getting the id for the recently created items. Let me explain the scenario:&lt;/p&gt;&lt;ol&gt;&lt;li&gt;a new model instance is created with and an empty &lt;code&gt;id&lt;/code&gt;&lt;/li&gt;&lt;li&gt;the form gets saved triggering a POST or PUT request&lt;/li&gt;&lt;li&gt;the server receives and saves the new and updated items&lt;/li&gt;&lt;li&gt;the new items get the &lt;code&gt;ids&lt;/code&gt; filled out&lt;/li&gt;&lt;li&gt;all items are sent back with updated server-side &lt;code&gt;ids&lt;/code&gt;&lt;/li&gt;&lt;/ol&gt;&lt;p&gt;The issue is with mapping the new &lt;code&gt;ids&lt;/code&gt; to the instances which are on the client side without an &lt;code&gt;id&lt;/code&gt;.&lt;/p&gt;&lt;p&gt;Backbone.js generates a unique client-side &lt;code&gt;cid&lt;/code&gt; for every object. The idea was to serialize the &lt;code&gt;cid&lt;/code&gt; and send it back from the server with the server side &lt;code&gt;id&lt;/code&gt;. As server I use rails. I added new virtual attribute &lt;code&gt;cid&lt;/code&gt; to the model and serialized it. For the client models serializing (&lt;code&gt;toJSON&lt;/code&gt;) and parsing needed to be updated. Method &lt;code&gt;toJSON&lt;/code&gt; was the easy part:&lt;/p&gt;&lt;pre&gt;&lt;code&gt;toJSON: function&amp;#40;&amp;#41; {
+  return &amp;#95;.extend&amp;#40;toJSON.&amp;#95;&amp;#95;super&amp;#95;&amp;#95;.constructor.apply&amp;#40;this, arguments&amp;#41;,
+      { cid: this.cid }&amp;#41;
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Bit trickier is handling of the response coming from the server. It's necessary to identify the existing item using the &lt;code&gt;cid&lt;/code&gt; and update it with the new server side &lt;code&gt;id&lt;/code&gt;. After exploring several possible ways, how to do it wrong, I was &lt;a href='github.com/documentcloud/backbone/pull/2177'&gt;advised&lt;/a&gt; to override the &lt;code&gt;parse&lt;/code&gt; method.&lt;/p&gt;&lt;pre&gt;&lt;code&gt;parse: function &amp;#40;resp&amp;#41; {
+  return &amp;#95;.map&amp;#40;resp, function &amp;#40;attrs&amp;#41; {
+    var cid = attrs.cid;
+    delete attrs.cid;
+    var existing = this.get&amp;#40;cid&amp;#41;;
+    return existing ? existing.set&amp;#40;attrs&amp;#41;.attributes : attrs;
+  }, this&amp;#41;;
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;That simple definition of the &lt;code&gt;parse&lt;/code&gt; method showed me the elegance of backbone. Searching for a simple solution proved to be worthwhile.&lt;/p&gt;
+</description>
+<pubDate>
+Sun, 10 Feb 2013 00:00:00 +0100
+</pubDate>
+<author>
+fifigyuri
+</author>
+</item>
+<item>
+<guid>
+http://infiniteiteration.com/blog/posts/2012-07-16-restricting-models-with-he.htmlallr.html
+</guid>
+<link>
+http://infiniteiteration.com/blog/posts/2012-07-16-restricting-models-with-he.htmlallr.html
+</link>
+<title>
+Restricting Models with Heimdallr
+</title>
+<description>
+&lt;p&gt;I found myself several times implementing the logic for restictions in controllers. Althought that might be fine, when the things get more complex, this practice can become hard to maintain. As modeling restrictions belongs to the core logic of the application, perhaphs they should be placed there..&lt;/p&gt;&lt;p&gt;That's what &lt;a href='http://github.com/roundlake/heimdallr'&gt;heimdallr&lt;/a&gt; is supposed to resolve. This gem provides model level security by wrapping the model classes and instances by a proxy. The access rights are declared in the model:&lt;/p&gt;&lt;pre&gt;&lt;code&gt;class Card &amp;lt; ActiveRecord::Base
+  include Heimdallr::Model
+  belongs&amp;#95;to :person
+  attr&amp;#95;accessible :suit, :rank, :backside
+  restrict do |person, card|
+    if person.arbiter?
+      # the arbiter can do anything
+      scope :fetch, -&amp;gt; {}
+    elsif person.playing?
+      # if the user is playing, only the card at hand is visible
+      scope :fetch, -&amp;gt; do
+        where&amp;#40;&amp;#91;'person&amp;#95;id = ?', person&amp;#93;&amp;#41;
+      end
+    end
+  end
+end
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;The &lt;code&gt;restrict&lt;/code&gt; block can take more parameters, based on these we can decide how to restrict the model. The last parameter (&lt;code&gt;card&lt;/code&gt; in the example) is an instance of the model, if it is &lt;code&gt;nil&lt;/code&gt; the model class was passed to the restrict block. The restriction can be thus called on either the model class or on a concrete instance: &lt;code&gt;Card.restrict&amp;#40;person&amp;#41;&lt;/code&gt; vs &lt;code&gt;card.restrict&amp;#40;person&amp;#41;&lt;/code&gt;.&lt;/p&gt;&lt;p&gt;Heimdallr maintains a scope for fetching and deletion. Scope restriction are obviously useful when restricting the model class. Calling &lt;code&gt;all&lt;/code&gt; on the proxied model returns only the cards visible by the person. Wondering how to simply ask whether a card instance is visible by the person? &lt;code&gt;card.restrict&amp;#40;person&amp;#41;.visible?&lt;/code&gt; does just that. For testing destroyability of a record there is &lt;code&gt;destroyable?&lt;/code&gt;.&lt;/p&gt;&lt;p&gt;I covered briefly scope restriction using  heimdallr in this post. However, there is yet more how heimdallr can help. Finer restrictions, such as attribute visibility and updatability are often crucial as well. But let's leave this for later.&lt;/p&gt;
+</description>
+<pubDate>
+Mon, 16 Jul 2012 00:00:00 +0200
+</pubDate>
+<author>
+fifigyuri
+</author>
+</item>
+<item>
+<guid>
+http://infiniteiteration.com/blog/posts/2012-07-01-non-modal-inline-dialogs.html
+</guid>
+<link>
+http://infiniteiteration.com/blog/posts/2012-07-01-non-modal-inline-dialogs.html
+</link>
+<title>
+Non-Modal Inline Dialogs: Ask Questions in Awesome Ways
+</title>
+<description>
+&lt;p&gt;Asking questions, confirmations from the users is a pretty usual part of any user interface. Still often I find tackling this simple task solved in unsatisfying way. The simplest solution is the &lt;code&gt;confirm&amp;#40;'ask your question..'&amp;#41;;&lt;/code&gt; dialog. However, this often ruins the otherwise possibly clean design. Confirm dialogs are modal and therefore users can not proceed further actions without answering the questions. But what if you do not need immediate answers? Often it is enough leaving the dialog questions opened. In such situation try using &quot;inline dialogs&quot;.&lt;/p&gt;&lt;p&gt;Let's build a simple scenario. We have three simple events which the user can trigger: calling a firemen, calling police or ambulance. Obviously triggering these events could be useful to handle with a simple question before they are really triggered. If this security question is answered positively, the event is triggered, otherwise the original &lt;i&gt;Call the ...&lt;/i&gt; link is rendered. The dialog blocks are divided into a trigger and question part.&lt;/p&gt;&lt;pre&gt;&lt;code&gt;&amp;lt;DIV CLASS='dialog&amp;#95;block' DATA-MESSAGE='Calling the firemen!'&amp;gt;
+  &amp;lt;A HREF=&amp;quot;#&amp;quot; CLASS=&amp;quot;dialog&amp;#95;trigger&amp;quot;&amp;gt;Call the Firemen!&amp;lt;/A&amp;gt;
+  &amp;lt;DIV CLASS=&amp;quot;dialog&amp;#95;question&amp;quot;&amp;gt;
+    Call?
+    &amp;lt;A HREF=&amp;quot;#&amp;quot; CLASS=&amp;quot;answer&amp;#95;yes&amp;quot;&amp;gt;Yes&amp;lt;/A&amp;gt;
+    &amp;lt;A HREF=&amp;quot;#&amp;quot; CLASS=&amp;quot;answer&amp;#95;no&amp;quot;&amp;gt;No&amp;lt;/A&amp;gt;
+  &amp;lt;/DIV&amp;gt;
+&amp;lt;/DIV&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;For handling the dialog actions I use jQuery now. We need only three simple callbacks for handlers: activation of the question trigger, handler for the yes and the no answer.&lt;/p&gt;&lt;pre&gt;&lt;code&gt;var turnOffDialogQuestion = function&amp;#40;el&amp;#41; {
+  $dialog&amp;#95;block = getDialogBlock&amp;#40;el&amp;#41;;
+  $dialog&amp;#95;block.find&amp;#40;'.dialog&amp;#95;question'&amp;#41;.fadeOut&amp;#40;'fast',
+    function&amp;#40;&amp;#41; { $dialog&amp;#95;block.find&amp;#40;'.dialog&amp;#95;trigger'&amp;#41;.fadeIn&amp;#40;'fast'&amp;#41;; }&amp;#41;;
+};
+var getDialogBlock = function&amp;#40;el&amp;#41; {
+  return $&amp;#40;el&amp;#41;.parents&amp;#40;'.dialog&amp;#95;block'&amp;#41;;
+};
+$&amp;#40;document&amp;#41;.ready&amp;#40;function&amp;#40;&amp;#41; {
+  $&amp;#40;'.dialog&amp;#95;trigger'&amp;#41;.click&amp;#40;function&amp;#40;ev&amp;#41; {
+    $dialog&amp;#95;block = getDialogBlock&amp;#40;this&amp;#41;;
+    $&amp;#40;this&amp;#41;.fadeOut&amp;#40;'fast',
+      function&amp;#40;&amp;#41; { $dialog&amp;#95;block.find&amp;#40;'.dialog&amp;#95;question'&amp;#41;.fadeIn&amp;#40;'fast'&amp;#41;; }&amp;#41;;
+    ev.preventDefault&amp;#40;&amp;#41;;
+    return false;
+  }&amp;#41;;
+  $&amp;#40;'.dialog&amp;#95;question .answer&amp;#95;yes'&amp;#41;.click&amp;#40;function&amp;#40;ev&amp;#41; {
+    alert&amp;#40;getDialogBlock&amp;#40;this&amp;#41;.data&amp;#40;'message'&amp;#41;&amp;#41;;
+    turnOffDialogQuestion&amp;#40;this&amp;#41;;
+    ev.preventDefault&amp;#40;&amp;#41;;
+    return false;
+  }&amp;#41;;
+  $&amp;#40;'.dialog&amp;#95;question .answer&amp;#95;no'&amp;#41;.click&amp;#40;function&amp;#40;ev&amp;#41; {
+    turnOffDialogQuestion&amp;#40;this&amp;#41;;
+    ev.preventDefault&amp;#40;&amp;#41;;
+    return false;
+  }&amp;#41;;
+}&amp;#41;;
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+<pubDate>
+Sun, 01 Jul 2012 00:00:00 +0200
+</pubDate>
+<author>
+fifigyuri
+</author>
+</item>
+</channel>
+</rss>
